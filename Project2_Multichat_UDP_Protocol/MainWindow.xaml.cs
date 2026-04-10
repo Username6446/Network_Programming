@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -16,17 +17,23 @@ namespace Project2_Multichat_UDP_Protocol
 {
     public partial class MainWindow : Window
     {
-        UdpClient udpClient;
+        TcpClient tcpClient;
         IPEndPoint serverEndPoint;
         const string serverAddress = "127.0.0.1";
         const int server_port = 4040;
+
+        NetworkStream ns = null;
+        StreamReader sr = null;
+        StreamWriter sw = null;
+
         ObservableCollection<MessageInfo> messages = new ObservableCollection<MessageInfo>();
         public MainWindow()
         {
             InitializeComponent();
             this.DataContext = messages;
-            udpClient = new UdpClient();
+            tcpClient = new TcpClient();
             serverEndPoint = new IPEndPoint(IPAddress.Parse(serverAddress), server_port);
+            this.nicknameTextBox.Text = "q";
         }
 
         private void Send_Button_Click(object sender, RoutedEventArgs e)
@@ -34,50 +41,66 @@ namespace Project2_Multichat_UDP_Protocol
             if (msgTextBox.Text.Length > 0 && nicknameTextBox.Text.Length > 0)
             {
                 string message = msgTextBox.Text;
-                string nickname = nicknameTextBox.Text;
+                string nickname = "";
                 SendMessage(message, nickname);
             }
         }
 
-        private void Join_Button_Click(object sender, RoutedEventArgs e)
+        private void Connection_Button_Click(object sender, RoutedEventArgs e)
         {
             string message = "$<join>";
-            if (nicknameTextBox.Text.Length > 0)
+            try
             {
-                string nickname = nicknameTextBox.Text;
-                SendMessage(message, nickname);
+                tcpClient.Connect(serverEndPoint);
+                ns = tcpClient.GetStream();
+                sr = new StreamReader(ns);
+                sw = new StreamWriter(ns);
+
+                if (nicknameTextBox.Text.Length > 0)
+                {
+                    string nickname = nicknameTextBox.Text;
+                    SendMessage(message, nickname);
+                }
+                Listen();
             }
-            Listen();
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            
 
         }
-        private async void SendMessage(string message, string nickname)
+        private void SendMessage(string message, string nickname)
         {
-            string result = nickname + "!" + message;
-            byte[] data = Encoding.UTF8.GetBytes(result);
-            await udpClient.SendAsync(data, data.Length, serverEndPoint);
+            //string allMessage = message+nickname;
+            sw.WriteLine(message);
+            sw.Flush();
         }
         private async void Listen()
         {
             while (true)
             {
-                var result = await udpClient.ReceiveAsync();
-                string[] res = Encoding.UTF8.GetString(result.Buffer).Split('!');
-                string nickname = res[0];
-                string message = res[1];
-                messages.Add(new MessageInfo(nickname, message, DateTime.Now));
+                string? result = await sr.ReadLineAsync();
+                //string[] res = result!.Split('!');
+                //string nickname = res[0];
+                //string message = res[1];
+                messages.Add(new MessageInfo(result, "", DateTime.Now));
                 
             }
         }
 
-        private void Leave_Button_Click(object sender, RoutedEventArgs e)
+        private void Disconnect_Button_Click(object sender, RoutedEventArgs e)
         {
-            string message = "$<leave>";
-            if (nicknameTextBox.Text.Length > 0)
-            {
-                string nickname = nicknameTextBox.Text;
-                SendMessage(message, nickname);
-            }
-            Listen();
+            ns.Close();
+            tcpClient.Close();
+            
+            //string message = "$<leave>";
+            //if (nicknameTextBox.Text.Length > 0)
+            //{
+            //    string nickname = nicknameTextBox.Text;
+            //    SendMessage(message, nickname);
+            //}
+            //Listen();
 
         }
     }
@@ -86,10 +109,10 @@ namespace Project2_Multichat_UDP_Protocol
         public string NickName { get; set; }
         public string Message { get; set; }
         public DateTime Time { get; set; }
-        public MessageInfo(string NickName, string Message, DateTime Time)
+        public MessageInfo(string? NickName, string? Message, DateTime Time)
         {
-            this.NickName = NickName;
-            this.Message = Message;
+            this.NickName = NickName ?? "";
+            this.Message = Message ?? "";
             this.Time = Time;
         }
         public override string ToString()

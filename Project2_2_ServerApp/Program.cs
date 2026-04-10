@@ -8,58 +8,84 @@ namespace Project2_2_ServerApp
     class ChatServer
     {
         const short port = 4040;
-        const string JOIN_CMD = "$<join>";
-        const string LEAVE_CMD = "$<leave>";
-        UdpClient udpClient;
-        IPEndPoint remoteEP = null;
-        List<IPEndPoint> members;
+        const string serverAddress = "127.0.0.1";
+
+        TcpListener server;
+
         
         public ChatServer()
         {
-            udpClient = new UdpClient(port);
-            members = new List<IPEndPoint>();
+            server = new TcpListener(new IPEndPoint(IPAddress.Parse(serverAddress), port));
         }
-        private void AddMember(IPEndPoint member)
+
+        private Dictionary<string, string> cityCodes = new Dictionary<string, string>()
         {
-            members.Add(remoteEP);
-            Console.WriteLine("Member was added!");
-        }
-        private void DeleteMember(IPEndPoint member)
-        {
-            members.Remove(remoteEP);
-            Console.WriteLine("Member was leave!");
-        }
+            { "AA", "Києва" },
+            { "KA", "Києва" },
+            { "AX", "Харкова" },
+            { "KX", "Харкова" },
+            { "BO", "Львова" },
+            { "KO", "Львова" },
+            { "BH", "Одеси" },
+            { "KH", "Одеси" },  
+            { "AE", "Дніпра" },
+            { "KE", "Дніпра" },
+            { "AH", "Донецька" },
+            { "AM", "Луганська" },
+            { "AP", "Запоріжжя" },
+            { "AB", "Вінниці" },
+            { "AC", "Луцька" },
+            { "AT", "Івано-Франківська" },
+            { "BA", "Кропивницького" },
+            { "BE", "Миколаєва" },
+            { "BI", "Полтави" },
+            { "BK", "Рівного" },
+            { "BM", "Сум" },
+            { "BT", "Херсона" },
+            { "BX", "Хмельницького" },
+            { "CA", "Черкас" },
+            { "CB", "Чернігова" },
+            { "CE", "Чернівців" },
+            { "CH", "Севастополя" }
+        };
         public void Start()
         {
+            server.Start();
+            Console.WriteLine("Waiting ");
+            TcpClient client = server.AcceptTcpClient();
+
+            Console.WriteLine("Connected");
+            NetworkStream ns = client.GetStream();
+            StreamReader sr = new StreamReader(ns);
+            StreamWriter sw = new StreamWriter(ns);
             while (true)
             {
-                byte[] data = udpClient.Receive(ref remoteEP);
-
-                string[] res = Encoding.UTF8.GetString(data).Split('!');
-                string nickname = res[0]; 
-                string message = res[1]; 
-                Console.WriteLine($"NickName : {nickname} Got message : {message}" +
-            $"From : {remoteEP} Time : {DateTime.Now.ToShortTimeString()}");
-                switch (message)
+                try
                 {
-                    case JOIN_CMD:
-                        AddMember(remoteEP);
+                    string? message = sr.ReadLine();
+                    if (message == null)
+                    {
                         break;
-                    case LEAVE_CMD:
-                        DeleteMember(remoteEP);
-                        break;
-                    default:
-                        SendToAllMembers(data);
-                        break;
-                }
+                    }
 
-            }
-        }
-        private void SendToAllMembers(byte[] data)
-        {
-            foreach (IPEndPoint member in members)
-            {
-                udpClient.SendAsync(data, data.Length, member);
+                    string city;
+                    if (cityCodes.TryGetValue(message.ToUpper(), out city))
+                    {
+                        Console.WriteLine($"Машина з {city}");
+                        sw.WriteLine($"Підтверджено: машина з {city}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Невідомий код: {message}");
+                        sw.WriteLine($"Помилка: код '{message}' не розпізнано");
+                    }
+                    sw.Flush();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Помилка: {ex.Message}");
+                    break;
+                }
             }
         }
     }

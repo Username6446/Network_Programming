@@ -10,8 +10,8 @@
         <DockPanel DockPanel.Dock="Top">
             <Label Padding="10" Background="AliceBlue">Messaage</Label>
             <Button DockPanel.Dock="Right" Padding="10" Margin="5" Click="Send_Button_Click" Background="AntiqueWhite">Send</Button>
-            <Button DockPanel.Dock="Right" Padding="10" Margin="5" Click="Join_Button_Click" Background="Aqua">Join</Button>
-            <Button DockPanel.Dock="Right" Padding="10" Margin="5" Click="Leave_Button_Click" Background="Aquamarine">Leave</Button>
+            <Button DockPanel.Dock="Right" Padding="10" Margin="5" Click="Connection_Button_Click" Background="Aqua">Connection</Button>
+            <Button DockPanel.Dock="Right" Padding="10" Margin="5" Click="Disconnect_Button_Click" Background="Aquamarine">Disconnect</Button>
             <TextBox Margin="5" Padding="5"  
                      VerticalAlignment="Center"
                      DockPanel.Dock="Right"
