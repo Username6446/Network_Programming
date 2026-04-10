@@ -33,7 +33,7 @@ namespace Project2_Multichat_UDP_Protocol
             this.DataContext = messages;
             tcpClient = new TcpClient();
             serverEndPoint = new IPEndPoint(IPAddress.Parse(serverAddress), server_port);
-            this.nicknameTextBox.Text = "q";
+            this.nicknameTextBox.Text = "None";
         }
 
         private void Send_Button_Click(object sender, RoutedEventArgs e)

@@ -48,6 +48,7 @@ namespace Project2_2_ServerApp
             { "CE", "Чернівців" },
             { "CH", "Севастополя" }
         };
+       
         public void Start()
         {
             server.Start();
@@ -71,8 +72,8 @@ namespace Project2_2_ServerApp
                     string city;
                     if (cityCodes.TryGetValue(message.ToUpper(), out city))
                     {
-                        Console.WriteLine($"Машина з {city}");
-                        sw.WriteLine($"Підтверджено: машина з {city}");
+                        Console.WriteLine($"Машина {message} з {city}");
+                        sw.WriteLine($"Підтверджено {message}: машина з {city}");
                     }
                     else
                     {
